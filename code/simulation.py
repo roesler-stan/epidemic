@@ -467,8 +467,8 @@ def _make_meta_gifs():
 
 
 if __name__ == "__main__":
-    # _run_simulations()
-    # _save_meta_df()
-    # _make_meta_tables()
-    # _make_meta_plots()
+    _run_simulations()
+    _save_meta_df()
+    _make_meta_tables()
+    _make_meta_plots()
     _make_meta_gifs()
