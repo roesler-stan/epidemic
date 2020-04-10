@@ -15,6 +15,8 @@ import os
 import shutil
 import math
 import imageio
+from PIL import Image
+import pygifsicle
 from constants import *
 
 
@@ -394,8 +396,8 @@ def _make_meta_tables():
         # Convert to %
         df[f'{outcome}_mean'] = (df[f'{outcome}_mean'] / N) * 100
         df[f'{outcome}_se'] = (df[f'{outcome}_se'] / N) * 100
-        df[f'{outcome}_ci'] = (df[f"{outcome}_mean"] - (1.96 * df[f"{outcome}_se"])).round().astype(int).astype(str) + '-' + \
-        (df[f"{outcome}_mean"] + (1.96 * df[f"{outcome}_se"])).round().astype(int).astype(str)
+        df[f'{outcome}_ci'] = (df[f"{outcome}_mean"] - (1.96 * df[f"{outcome}_se"])).round(1).astype(str) + '-' + \
+        (df[f"{outcome}_mean"] + (1.96 * df[f"{outcome}_se"])).round(1).astype(str)
         table = df[df['day'] == N_DAYS].pivot(index='non_social_within_cluster_contacts', columns='cross_cluster_contacts', values=f"{outcome}_ci")
         table.to_csv(f"{output_dir}/{outcome}_day{N_DAYS}.csv", index=True)
 
@@ -450,20 +452,27 @@ def _make_meta_gifs():
     output_dir = "../output/gifs"
     if os.path.isdir(output_dir):
         shutil.rmtree(output_dir)
-    os.makedirs(output_dir)
+    os.makedirs(output_dir)    
 
     n_versions = _count_versions()
     for version in range(n_versions):
         directory = f"../output/simulations/v{version}/plots"
         images = []
-        for day in range(N_DAYS):
+        for day in range(N_DAYS + 1):
             filename = os.path.join(directory, f'iteration0_day{day}.png')
-            if not os.path.exists(filename):
-                break
-            images.append(imageio.imread(filename))
+            # Crop image, original is 1100 x 800
+            left = 130
+            right = 1000
+            top = 90
+            bottom = 720
+            im = Image.open(filename)
+            im_cropped = im.crop((left, top, right, bottom))
+            images.append(im_cropped)
 
         outfile = os.path.join(output_dir, f"v{version}.gif")
         imageio.mimsave(outfile, images)
+        # Optimize to reduce storage
+        pygifsicle.optimize(outfile)
 
 
 if __name__ == "__main__":
@@ -472,3 +481,5 @@ if __name__ == "__main__":
     _make_meta_tables()
     _make_meta_plots()
     _make_meta_gifs()
+    # In shell, convert gifs to videos
+    # ffmpeg -i ../output/gifs/v0.gif ../output/gifs/v0.mp4
