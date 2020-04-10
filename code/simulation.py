@@ -1,18 +1,9 @@
 """
     Simulate the coronavirus pandemic
 
-    python3 simulation.py --version 1
+    python3 simulation.py runs these simulations and saves results into ../output
 
-    # Calculating probabilities to be realistic -> ~2% death rate given infection, 19 days of infection with chance of infecting others
-    # P die | infected = (P die each day) * E(days infected)
-    # E(days infected) = (P infected | day) * day = 1 - P(not infected | day) * day
-    # P(infected tomorrow | infected today) = 1 - ((P die | infected) + (P recover | infected)) = 1 - (0.001 + 0.05) = 0.949
-    # E(days infected) = Sum(E(infected today)) = Sum(0.949^day) = 0.949 + 0.949^2 + 0.949^3...
-    # https://en.wikipedia.org/wiki/Geometric_series
-    # 1 + r + r^2 + r3... = (1 - r^(n + 1)) / (1 - r) = (1 - 0.949^n) / (1 - 0.949) = at limit = 1 / .051 = 19.6
-    # But we should subtract a day because we don't want to count the probability of infected in day 0
-    # So E(days infected) = 18.6
-    # P die|infected = 0.001 * 18.6 = 1.9%
+    The current setup takes ~4 hours.
 """
 
 import networkx as nx
@@ -27,7 +18,9 @@ import imageio
 from constants import *
 
 
+# Constants.  You could alter this file to vary these, e.g. to try different P(infect) parameters
 N = 1000
+N_CLUSTERS = 10
 N_ITERATIONS = 100
 N_DAYS = 364
 N_INITIAL_INFECTIONS = 2
@@ -37,6 +30,8 @@ N_SOCIAL = 10
 P_INFECT =  0.1
 P_DIE = 0.001
 P_RECOVER = 0.05
+# How many days after initial infection to use for R0 calculation
+R0_DAYS = 30
 
 
 class Simulation():
@@ -61,11 +56,10 @@ class Simulation():
         self.N = N
         # % of population that is social (e.g. 0.25% doctors, some supermarket workers)
         # Clusters (like countries or big cities within the US)
-        self.n_clusters = 10
+        self.n_clusters = N_CLUSTERS
         # How many days from initial infections to forecast
         self.n_days = N_DAYS
-        # How many days after initial infection to use for R0 calculation
-        self.R0_days = 30
+        self.R0_days = R0_DAYS
         assert self.n_days >= self.R0_days
         # How many simulations to run per version
         self.n_iterations = N_ITERATIONS
